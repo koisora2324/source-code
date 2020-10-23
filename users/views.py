@@ -50,13 +50,19 @@ def login(request):
     """登录view视图函数"""
     # 使用模板文件login.html,返回登录函数
     # return render(request, 'login.html')
+    username = request.session.get('username')
+    if username:
+        # username 在session中存在,则用户已登录
+        return HttpResponse('%s用户已登录' % username)
+
     if request.method == 'GET':
         # 返回登录界面
         # return render(request, 'login.html')
-        username = request.COOKIES.get('username')
-
-        # 返回登录页面
-        return render(request, 'login.html', context={'username': username})
+        # username = request.COOKIES.get('username')
+        #
+        # # 返回登录页面
+        # return render(request, 'login.html', context={'username': username})
+        return render(request, 'login.html')
     else:
         # 登录业务逻辑
         # 获取username 和 password
@@ -75,12 +81,19 @@ def login(request):
             return JsonResponse({'message': 'login failed'})
         else:
             # 用户名和密码正确
-            # return JsonResponse({'message': 'login success'})
-            response = JsonResponse({'message': 'login success'})
+            # 1.return JsonResponse({'message': 'login success'})
+            # 2.response = JsonResponse({'message': 'login success'})
+            # # 判断是否需要记住登录用户名
+            # if remember == 'true':
+            #     # 记住登录用户名,设置cookie数据,有效期为14天
+            #     response.set_cookie('username', username, max_age=14 * 24 * 3600)
+            #
+            # return response
+            request.session['user_id'] = user.id
+            request.session['username'] = user.username
 
-            # 判断是否需要记住登录用户名
-            if remember == 'true':
-                # 记住登录用户名,设置cookie数据,有效期为14天
-                response.set_cookie('username', username, max_age=14 * 24 * 3600)
+            if remember != 'true':
+                # 不记住登录,将session的标识cookie设置为浏览器关闭即失效
+                request.session.set_expiry(0)
 
-            return response
+            return JsonResponse({'message': 'login success'})
